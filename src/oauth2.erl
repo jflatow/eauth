@@ -115,9 +115,15 @@ initiate_authorization(Conf, Params, StateValue) ->
      fun complete_authorization/3}.
 
 complete_authorization(Conf, Params, StateToken) ->
-    %% The state token must match, if not its the caller's fault
-    StateToken = util:get(Params, <<"state">>, <<>>),
-    StateValue = state_value(StateToken),
+    %% The state token must match, for CSRF protection
+    case util:get(Params, <<"state">>, <<>>) of
+        StateToken ->
+            complete_authorization(Conf, Params, StateToken, state_value(StateToken));
+        _ ->
+            {error, bad_state}
+    end.
+
+complete_authorization(Conf, Params, _, StateValue) ->
     case util:get(Params, <<"code">>) of
         undefined ->
             {error, {Params, StateValue}};

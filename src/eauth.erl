@@ -1,8 +1,8 @@
 -module(eauth).
 -author("Jared Flatow").
 
--export([config/1,
-         config/2,
+-export([prefs/1,
+         prefs/2,
          initiate_login/4,
          complete_login/4,
          retrieve_userinfo/4,
@@ -10,7 +10,11 @@
          complete_authorization/4,
          retrieve_resource/4]).
 
--export([drive/6]).
+-export([dispatch/5,
+         dispatch/6,
+         dispatch/7,
+         drive/6,
+         execute_request/2]).
 
 -export_type([prefs/0,
               provider/0,
@@ -29,10 +33,10 @@
 -type request() :: {http, {get | post, url:raw(), list(), iodata()}}.
 -type step() :: {'client' | 'user-agent', {request(), term()}, function() | nil} | {error, term()}.
 
-config(Overrides) ->
-    config(eauth_hub:config(), Overrides).
+prefs(Overrides) ->
+    prefs(eauth_hub:prefs(), Overrides).
 
-config(Defaults, Overrides) ->
+prefs(Defaults, Overrides) ->
     util:fold(fun ({Provider, Conf}, Acc) ->
                       util:swap(Acc, Provider, fun (D) -> util:update(D, Conf) end)
               end, Defaults, Overrides).
@@ -63,6 +67,8 @@ dispatch(Prefs, Provider, undefined, What, Opts, State) ->
 dispatch(Prefs, Provider, Hub, What, Opts, State) ->
     dispatch(Prefs, Provider, util:get(Prefs, Provider), Hub, What, Opts, State).
 
+dispatch(_, _, undefined, _, _, _, _) ->
+    {error, configuration};
 dispatch(Prefs, Provider, Conf, Hub, What, Opts, State) ->
     case Hub:dispatch(Prefs, Provider, Conf, What, Opts) of
         {Fun, Arg} ->

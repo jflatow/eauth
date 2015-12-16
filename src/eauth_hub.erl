@@ -1,7 +1,7 @@
 -module(eauth_hub).
 -author("Jared Flatow").
 
--export([config/0,
+-export([prefs/0,
          dispatch/5]).
 
 -export([initiate_login/4,
@@ -18,7 +18,7 @@
       What :: atom(),
       Opts :: #{}.
 
-config() ->
+prefs() ->
     #{
        <<"facebook">> => #{
            authorization_uri =>
@@ -85,10 +85,8 @@ dispatch(_Prefs, Provider, Conf, What, Opts) ->
 initiate_login(Provider, openid, Conf, Opts) ->
     Opts1 = util:accrue(Opts, scopes, {addnew, ["openid", "profile"]}),
     initiate_authorization(Provider, oauth2, Conf, Opts1);
-initiate_login(Provider, oauth2, Conf, Opts) ->
-    initiate_authorization(Provider, oauth2, Conf, Opts);
-initiate_login(Provider, oauth1, Conf, Opts) ->
-    initiate_authorization(Provider, oauth1, Conf, Opts).
+initiate_login(Provider, Schema, Conf, Opts) ->
+    initiate_authorization(Provider, Schema, Conf, Opts).
 
 complete_login(Provider, Schema, Conf, Opts) ->
     complete_authorization(Provider, Schema, Conf, Opts).
@@ -96,7 +94,7 @@ complete_login(Provider, Schema, Conf, Opts) ->
 retrieve_userinfo(Provider = <<"linkedin">>, oauth2, Conf, Opts) ->
     URL = util:get(Conf, userinfo_uri),
     FieldStr =
-        case util:get(Opts, fields, []) of
+        case util:getone([{Opts, fields}, {Conf, userinfo_fields}], []) of
             [] ->
                 [];
             Fields ->
@@ -112,8 +110,13 @@ retrieve_userinfo(Provider, Schema, Conf, Opts) ->
 
 initiate_authorization(_Provider, Schema, _Conf, Opts) when Schema =:= oauth2;
                                                             Schema =:= openid ->
-    Scope = str:join(util:get(Opts, scopes, []), " "),
-    Params = util:create(util:get(Opts, params, []), <<"scope">>, Scope),
+    Scopes = util:get(Opts, scopes, []),
+    Params = util:modify(util:get(Opts, params, []), <<"scope">>,
+                         fun (undefined) ->
+                                 str:join(Scopes, " ");
+                             (Scope) ->
+                                 str:join([Scope|Scopes], " ")
+                         end),
     {fun oauth2:initiate_authorization/3, Params};
 initiate_authorization(_Provider, oauth1, _Conf, Opts) ->
     {fun oauth1:initiate_authorization/3, util:get(Opts, params, [])}.
