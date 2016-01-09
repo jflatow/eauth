@@ -20,6 +20,15 @@
 
 prefs() ->
     #{
+       <<"dropbox">> => #{
+           authorization_uri =>
+               <<"https://www.dropbox.com/1/oauth2/authorize">>,
+           token_uri =>
+               <<"https://api.dropboxapi.com/1/oauth2/token">>,
+           userinfo_uri =>
+               <<"https://api.dropboxapi.com/1/account/info">>
+          },
+
        <<"facebook">> => #{
            authorization_uri =>
                <<"https://www.facebook.com/dialog/oauth">>,
@@ -57,13 +66,15 @@ prefs() ->
                <<"https://api.linkedin.com/v1/people/~">>
           },
 
-       <<"dropbox">> => #{
+       <<"slack">> => #{
            authorization_uri =>
-               <<"https://www.dropbox.com/1/oauth2/authorize">>,
+               <<"https://slack.com/oauth/authorize">>,
            token_uri =>
-               <<"https://api.dropboxapi.com/1/oauth2/token">>,
+               <<"https://slack.com/api/oauth.access">>,
            userinfo_uri =>
-               <<"https://api.dropboxapi.com/1/account/info">>
+               <<"https://slack.com/api/auth.test">>,
+           token_type =>
+               {bearer, param, <<"token">>}
           },
 
        <<"twitter">> => #{
@@ -82,6 +93,9 @@ prefs() ->
 dispatch(_Prefs, Provider, Conf, What, Opts) ->
     ?MODULE:What(Provider, util:get(Conf, schema, oauth2), Conf, Opts).
 
+initiate_login(Provider = <<"slack">>, oauth2, Conf, Opts) ->
+    Opts1 = util:accrue(Opts, scopes, {addnew, ["identify"]}),
+    initiate_authorization(Provider, oauth2, Conf, Opts1);
 initiate_login(Provider, openid, Conf, Opts) ->
     Opts1 = util:accrue(Opts, scopes, {addnew, ["openid", "profile"]}),
     initiate_authorization(Provider, oauth2, Conf, Opts1);

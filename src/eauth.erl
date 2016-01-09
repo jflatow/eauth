@@ -38,7 +38,7 @@ prefs(Overrides) ->
 
 prefs(Defaults, Overrides) ->
     util:fold(fun ({Provider, Conf}, Acc) ->
-                      util:swap(Acc, Provider, fun (D) -> util:update(D, Conf) end)
+                      util:accrue(Acc, Provider, {update, Conf})
               end, Defaults, Overrides).
 
 initiate_login(Prefs, Provider, Opts, StateValue) ->

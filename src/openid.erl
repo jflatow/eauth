@@ -8,7 +8,7 @@
 
 configuration_request(Issuer) ->
     Path =
-        case url:rd(path, Issuer) of
+        case url:rd(p, Issuer) of
             [] ->
                 ["/", ".well-known", "openid-configuration"];
             P ->

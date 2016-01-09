@@ -196,7 +196,8 @@ authorized_request(Conf, Descriptor, TokenInfo) ->
     authorized_request(Conf, Descriptor, TokenInfo, Type).
 
 authorized_request(Conf, Descriptor, TokenInfo, undefined) ->
-    authorized_request(Conf, Descriptor, TokenInfo, {bearer, header});
+    Type = util:get(Conf, token_type, {bearer, header}),
+    authorized_request(Conf, Descriptor, TokenInfo, Type);
 authorized_request(Conf, Descriptor, TokenInfo, <<"bearer">>) ->
     authorized_request(Conf, Descriptor, TokenInfo, {bearer, header});
 
@@ -204,9 +205,9 @@ authorized_request(_Conf, {Method, URL, Headers, Params}, TokenInfo, {bearer, he
     Token = util:get(TokenInfo, <<"access_token">>),
     Headers1 = [{"Authorization", <<"Bearer ", Token/binary>>}|Headers],
     http_request(Method, URL, Headers1, Params);
-authorized_request(_Conf, {Method, URL, Headers, Params}, TokenInfo, {bearer, params}) ->
-    TP = util:select(TokenInfo, <<"access_token">>),
-    Params1 = util:update(Params, TP),
+authorized_request(_Conf, {Method, URL, Headers, Params}, TokenInfo, {bearer, param, Name}) ->
+    Token = util:get(TokenInfo, <<"access_token">>),
+    Params1 = util:modify(Params, Name, Token),
     http_request(Method, URL, Headers, Params1).
 
 http_request(get, URL, Headers, Params) ->
