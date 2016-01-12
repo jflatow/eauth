@@ -105,6 +105,18 @@ initiate_login(Provider, Schema, Conf, Opts) ->
 complete_login(Provider, Schema, Conf, Opts) ->
     complete_authorization(Provider, Schema, Conf, Opts).
 
+retrieve_userinfo(Provider = <<"facebook">>, oauth2, Conf, Opts) ->
+    URL = util:get(Conf, userinfo_uri),
+    FieldStr =
+        case util:getone([{Opts, fields}, {Conf, userinfo_fields}], []) of
+            [] ->
+                [];
+            Fields ->
+                str:join(Fields, $,)
+        end,
+    Query = #{fields => FieldStr},
+    Descriptor = {get, URL, [], Query},
+    retrieve_resource(Provider, oauth2, Conf, util:set(Opts, descriptor, Descriptor));
 retrieve_userinfo(Provider = <<"linkedin">>, oauth2, Conf, Opts) ->
     URL = util:get(Conf, userinfo_uri),
     FieldStr =
