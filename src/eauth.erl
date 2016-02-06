@@ -16,6 +16,9 @@
          drive/6,
          execute_request/2]).
 
+-export([state_token/1,
+         state_value/1]).
+
 -export_type([prefs/0,
               provider/0,
               conf/0,
@@ -37,8 +40,10 @@ prefs(Overrides) ->
     prefs(eauth_hub:prefs(), Overrides).
 
 prefs(Defaults, Overrides) ->
-    util:fold(fun ({Provider, Conf}, Acc) ->
-                      util:accrue(Acc, Provider, {update, Conf})
+    util:fold(fun ({Provider, Conf}, Acc) when is_map(Conf) ->
+                      util:accrue(Acc, Provider, {update, Conf});
+                  ({Key, Value}, Acc) ->
+                      util:set(Acc, Key, Value)
               end, Defaults, Overrides).
 
 initiate_login(Prefs, Provider, Opts, StateValue) ->
@@ -92,3 +97,14 @@ drive(Prefs, Provider, Conf, Fun, Arg, State) ->
 
 execute_request(Prefs, {http, Req}) ->
     eauth_http:eval(Req, util:get(Prefs, http_fun), util:get(Prefs, http_parse)).
+
+state_token(Value) ->
+    base64url:encode(term_to_binary([Value, crypto:rand_bytes(24)])).
+
+state_value(Token) ->
+    try
+        hd(binary_to_term(base64url:decode(Token), [safe]))
+    catch
+        _:_ ->
+            undefined
+    end.

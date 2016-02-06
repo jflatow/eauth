@@ -43,9 +43,7 @@
 -export([authorized_request/3,
          authorized_request/4]).
 
--export([http_request/4,
-         state_token/1,
-         state_value/1]).
+-export([http_request/4]).
 
 -spec initiate_authorization(Conf, Params, StateValue) -> eauth:step() when
       Conf :: eauth:conf(),
@@ -108,7 +106,7 @@ initiate_authorization(Conf, Params, StateValue) ->
       <<"response_type">> => <<"code">>,
       <<"client_id">> => util:get(Conf, client_id),
       <<"redirect_uri">> => util:get(Conf, redirect_uri),
-      <<"state">> => state_token(StateValue)
+      <<"state">> => eauth:state_token(StateValue)
      },
     {'user-agent',
      authorization_request_and_state(Conf, util:update(Defaults, Params)),
@@ -118,7 +116,7 @@ complete_authorization(Conf, Params, StateToken) ->
     %% The state token must match, for CSRF protection
     case util:get(Params, <<"state">>, <<>>) of
         StateToken ->
-            complete_authorization(Conf, Params, StateToken, state_value(StateToken));
+            complete_authorization(Conf, Params, StateToken, eauth:state_value(StateToken));
         _ ->
             {error, bad_state}
     end.
@@ -214,14 +212,3 @@ http_request(get, URL, Headers, Params) ->
     {http, {get, url:qu(URL, Params), Headers, []}};
 http_request(post, URL, Headers, Params) ->
     {http, {post, URL, [{"Content-Type", "application/x-www-form-urlencoded"}|Headers], url:enc(Params)}}.
-
-state_token(Value) ->
-    base64url:encode(term_to_binary([Value, crypto:rand_bytes(24)])).
-
-state_value(Token) ->
-    try
-        hd(binary_to_term(base64url:decode(Token), [safe]))
-    catch
-        _:_ ->
-            undefined
-    end.

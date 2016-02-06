@@ -108,7 +108,7 @@ complete_login(Provider, Schema, Conf, Opts) ->
 retrieve_userinfo(Provider = <<"facebook">>, oauth2, Conf, Opts) ->
     URL = util:get(Conf, userinfo_uri),
     FieldStr =
-        case util:getone([{Opts, fields}, {Conf, userinfo_fields}], []) of
+        case util:either([{Opts, fields}, {Conf, userinfo_fields}], []) of
             [] ->
                 [];
             Fields ->
@@ -120,7 +120,7 @@ retrieve_userinfo(Provider = <<"facebook">>, oauth2, Conf, Opts) ->
 retrieve_userinfo(Provider = <<"linkedin">>, oauth2, Conf, Opts) ->
     URL = util:get(Conf, userinfo_uri),
     FieldStr =
-        case util:getone([{Opts, fields}, {Conf, userinfo_fields}], []) of
+        case util:either([{Opts, fields}, {Conf, userinfo_fields}], []) of
             [] ->
                 [];
             Fields ->

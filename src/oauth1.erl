@@ -23,10 +23,7 @@
 -export([alg_oauth/1,
          oauth_alg/1]).
 
--import(oauth2, [http_request/4,
-                 state_token/1,
-                 state_value/1]).
-
+-import(oauth2, [http_request/4]).
 
 -spec temporary_credentials_request(Conf, Params) -> eauth:request() when
       Conf :: eauth:conf(),
@@ -49,7 +46,7 @@
 
 initiate_authorization(Conf, Params, StateValue) ->
     %% Unlike oauth2, if one overrides the callback, the state token won't make sense
-    StateToken = state_token(StateValue),
+    StateToken = eauth:state_token(StateValue),
     Defaults = #{
       <<"oauth_callback">> =>
           url:qu(util:get(Conf, redirect_uri), #{state => StateToken})
@@ -66,7 +63,7 @@ continue_authorization(Conf, Params, StateToken) ->
 complete_authorization(Conf, Params, StateToken) ->
     %% The state token must match, if not its the caller's fault
     StateToken = util:get(Params, <<"state">>, <<>>),
-    StateValue = state_value(StateToken),
+    StateValue = eauth:state_value(StateToken),
     Temp = util:select(Params, [<<"oauth_token">>, <<"oauth_token_secret">>]),
     Params1 = util:except(Params, [<<"oauth_token">>, <<"oauth_token_secret">>]),
     {'client', {token_request(Conf, Temp, Params1), StateValue}, nil}.
