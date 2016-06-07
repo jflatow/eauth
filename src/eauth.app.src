@@ -1,4 +1,0 @@
-%% -*- erlang -*-
-{application, eauth,
- [{vsn, git},
-  {applications, [kernel, stdlib]}]}.
