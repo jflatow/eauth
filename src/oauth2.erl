@@ -30,6 +30,7 @@
 
 -export([initiate_authorization/3,
          complete_authorization/3,
+         refresh_authorization/3,
          retrieve_resource/3]).
 
 -export([authorization_request/2,
@@ -129,6 +130,10 @@ complete_authorization(Conf, Params, _, StateValue) ->
             {'client', {token_from_authorization_code(Conf, #{<<"code">> => Code}), StateValue}, nil}
     end.
 
+refresh_authorization(Conf, Params, TokenInfo) ->
+    Params1 = util:update(Params, util:select(TokenInfo, [<<"refresh_token">>])),
+    {'client', {token_from_refresh_token(Conf, Params1), TokenInfo}, nil}.
+
 retrieve_resource(Conf, Descriptor, TokenInfo) ->
     {'client', {authorized_request(Conf, Descriptor, TokenInfo), TokenInfo}, nil}.
 
@@ -205,7 +210,7 @@ authorized_request(_Conf, {Method, URL, Headers, Params}, TokenInfo, {bearer, he
     http_request(Method, URL, Headers1, Params);
 authorized_request(_Conf, {Method, URL, Headers, Params}, TokenInfo, {bearer, param, Name}) ->
     Token = util:get(TokenInfo, <<"access_token">>),
-    Params1 = util:modify(Params, Name, Token),
+    Params1 = util:modify(Params, [Name], Token),
     http_request(Method, URL, Headers, Params1).
 
 http_request(get, URL, Headers, Params) ->

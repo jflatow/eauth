@@ -9,6 +9,7 @@
          retrieve_userinfo/4,
          initiate_authorization/4,
          complete_authorization/4,
+         refresh_authorization/4,
          retrieve_resource/4]).
 
 -callback dispatch(Prefs, Provider, Conf, What, Opts) -> {function(), term()} when
@@ -94,10 +95,10 @@ dispatch(_Prefs, Provider, Conf, What, Opts) ->
     ?MODULE:What(Provider, util:get(Conf, schema, oauth2), Conf, Opts).
 
 initiate_login(Provider = <<"slack">>, oauth2, Conf, Opts) ->
-    Opts1 = util:accrue(Opts, scopes, {addnew, ["identify"]}),
+    Opts1 = util:accrue(Opts, [scopes], {addnew, ["identify"]}),
     initiate_authorization(Provider, oauth2, Conf, Opts1);
 initiate_login(Provider, openid, Conf, Opts) ->
-    Opts1 = util:accrue(Opts, scopes, {addnew, ["openid", "profile"]}),
+    Opts1 = util:accrue(Opts, [scopes], {addnew, ["openid", "profile"]}),
     initiate_authorization(Provider, oauth2, Conf, Opts1);
 initiate_login(Provider, Schema, Conf, Opts) ->
     initiate_authorization(Provider, Schema, Conf, Opts).
@@ -108,7 +109,7 @@ complete_login(Provider, Schema, Conf, Opts) ->
 retrieve_userinfo(Provider = <<"facebook">>, oauth2, Conf, Opts) ->
     URL = util:get(Conf, userinfo_uri),
     FieldStr =
-        case util:either([{Opts, fields}, {Conf, userinfo_fields}], []) of
+        case util:either([{Opts, [fields]}, {Conf, [userinfo_fields]}], []) of
             [] ->
                 [];
             Fields ->
@@ -120,7 +121,7 @@ retrieve_userinfo(Provider = <<"facebook">>, oauth2, Conf, Opts) ->
 retrieve_userinfo(Provider = <<"linkedin">>, oauth2, Conf, Opts) ->
     URL = util:get(Conf, userinfo_uri),
     FieldStr =
-        case util:either([{Opts, fields}, {Conf, userinfo_fields}], []) of
+        case util:either([{Opts, [fields]}, {Conf, [userinfo_fields]}], []) of
             [] ->
                 [];
             Fields ->
@@ -137,7 +138,7 @@ retrieve_userinfo(Provider, Schema, Conf, Opts) ->
 initiate_authorization(_Provider, Schema, _Conf, Opts) when Schema =:= oauth2;
                                                             Schema =:= openid ->
     Scopes = util:get(Opts, scopes, []),
-    Params = util:modify(util:get(Opts, params, []), <<"scope">>,
+    Params = util:modify(util:get(Opts, params, []), [<<"scope">>],
                          fun (undefined) ->
                                  str:join(Scopes, " ");
                              (Scope) ->
@@ -152,6 +153,10 @@ complete_authorization(_Provider, Schema, _Conf, Opts) when Schema =:= oauth2;
     {fun oauth2:complete_authorization/3, util:get(Opts, params, [])};
 complete_authorization(_Provider, oauth1, _Conf, Opts) ->
     {fun oauth1:complete_authorization/3, util:get(Opts, params, [])}.
+
+refresh_authorization(_Provider, Schema, _Conf, Opts) when Schema =:= oauth2;
+                                                           Schema =:= openid ->
+    {fun oauth2:refresh_authorization/3, util:get(Opts, params, [])}.
 
 retrieve_resource(_Provider, Schema, _Conf, Opts) when Schema =:= oauth2;
                                                        Schema =:= openid ->

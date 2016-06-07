@@ -8,6 +8,7 @@
          retrieve_userinfo/4,
          initiate_authorization/4,
          complete_authorization/4,
+         refresh_authorization/4,
          retrieve_resource/4]).
 
 -export([dispatch/5,
@@ -41,7 +42,7 @@ prefs(Overrides) ->
 
 prefs(Defaults, Overrides) ->
     util:fold(fun ({Provider, Conf}, Acc) when is_map(Conf) ->
-                      util:accrue(Acc, Provider, {update, Conf});
+                      util:accrue(Acc, [Provider], {update, Conf});
                   ({Key, Value}, Acc) ->
                       util:set(Acc, Key, Value)
               end, Defaults, Overrides).
@@ -60,6 +61,9 @@ initiate_authorization(Prefs, Provider, Opts, StateValue) ->
 
 complete_authorization(Prefs, Provider, Opts, StateToken) ->
     dispatch(Prefs, Provider, complete_authorization, Opts, StateToken).
+
+refresh_authorization(Prefs, Provider, Opts, TokenInfo) ->
+    dispatch(Prefs, Provider, refresh_authorization, Opts, TokenInfo).
 
 retrieve_resource(Prefs, Provider, Opts, TokenInfo) ->
     dispatch(Prefs, Provider, retrieve_resource, Opts, TokenInfo).

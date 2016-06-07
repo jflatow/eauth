@@ -46,7 +46,7 @@ lhttpc(Request) ->
 
 lhttpc({Method, URL, Headers, Body}, Timeout) ->
     URL1 = util:str(URL),
-    Headers1 = util:create(Headers, 'User-Agent', lhttpc),
+    Headers1 = util:create(Headers, ['User-Agent'], lhttpc),
     case lhttpc:request(URL1, Method, Headers1, Body, Timeout) of
         {ok, {{StatusCode, _}, ResponseHeaders, ResponseBody}} ->
             {ok, StatusCode, ResponseHeaders, ResponseBody};
