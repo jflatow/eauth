@@ -103,7 +103,7 @@ execute_request(Prefs, {http, Req}) ->
     eauth_http:eval(Req, util:get(Prefs, http_fun), util:get(Prefs, http_parse)).
 
 state_token(Value) ->
-    base64url:encode(term_to_binary([Value, crypto:rand_bytes(24)])).
+    base64url:encode(term_to_binary([Value, crypto:strong_rand_bytes(24)])).
 
 state_value(Token) ->
     try

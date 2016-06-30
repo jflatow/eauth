@@ -134,7 +134,7 @@ sign_oauth_params(Raw, Base, Alg, Key) ->
     Pre = Base#{
             <<"oauth_signature_method">> => alg_oauth(Alg),
             <<"oauth_timestamp">> => util:bin(time:unix()),
-            <<"oauth_nonce">> => base64:encode(crypto:rand_bytes(24))
+            <<"oauth_nonce">> => base64:encode(crypto:strong_rand_bytes(24))
            },
     Pre#{<<"oauth_signature">> => signature(Raw, Pre, Alg, Key)}.
 
